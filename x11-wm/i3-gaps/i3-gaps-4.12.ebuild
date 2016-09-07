@@ -43,6 +43,13 @@ RDEPEND="${CDEPEND}
 DOCS=( RELEASE-NOTES-${PV} )
 
 src_prepare() {
+	# i3 does some really ugly things.
+	# remove dependency from git
+	# https://github.com/Airblader/i3/issues/26
+
+	sed -e 's/$(shell [ -f $(TOPDIR)/I3_VERSION ] && cat $(TOPDIR)/I3_VERSION)/'${PV}'/g' -i common.mk
+	sed -e '$(shell [ -f $(TOPDIR)/VERSION ] && cat $(TOPDIR)/VERSION)/'${PV}'/g' -i common.mk
+
 	if ! use pango; then
 		sed -e '/^PANGO_.*pangocairo/d' \
 		    -e '/PANGO_SUPPORT/ s/1/0/g' \
