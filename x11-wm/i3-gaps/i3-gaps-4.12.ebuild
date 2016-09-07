@@ -16,7 +16,7 @@ KEYWORDS="~amd64 ~arm ~x86"
 IUSE="+cairo +pango"
 REQUIRED_USE="pango? ( cairo )"
 
-S=${WORKDIR}/i3
+S=${WORKDIR}/i3-${PV}
 
 CDEPEND="dev-libs/libev
 	dev-libs/libpcre
@@ -43,10 +43,6 @@ RDEPEND="${CDEPEND}
 	!x11-wm/i3"
 
 DOCS=( RELEASE-NOTES-${PV} )
-
-pkg_setup() {
-	mkdir "${S}"
-}
 
 src_prepare() {
 	epatch "${FILESDIR}"/${P}-pango.patch
