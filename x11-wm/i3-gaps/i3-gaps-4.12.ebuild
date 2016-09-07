@@ -70,7 +70,6 @@ src_compile() {
 src_install() {
 	default
 	dohtml -r docs/*
-	doman man/*.1
 	exeinto /etc/X11/Sessions
 	doexe "${T}"/i3wm
 }
