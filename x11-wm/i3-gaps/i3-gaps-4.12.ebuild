@@ -28,9 +28,7 @@ CDEPEND="dev-libs/libev
 	x11-libs/xcb-util-cursor
 	x11-libs/xcb-util-keysyms
 	x11-libs/xcb-util-wm
-	cairo? (
-		>=x11-libs/cairo-1.14.4[X,xcb]
-	)
+	>=x11-libs/cairo-1.14.4[X,xcb]
 	pango? (
 		>=x11-libs/pango-1.30.0[X]
 	)"
@@ -45,17 +43,9 @@ RDEPEND="${CDEPEND}
 DOCS=( RELEASE-NOTES-${PV} )
 
 src_prepare() {
-	epatch "${FILESDIR}"/${P}-pango.patch
-
 	if ! use pango; then
 		sed -e '/^PANGO_.*pangocairo/d' \
 		    -e '/PANGO_SUPPORT/ s/1/0/g' \
-			-i common.mk || die
-	fi
-
-	if ! use cairo; then
-		sed -e '/^PANGO_.*cairo/d' \
-		    -e '/CAIRO_SUPPORT/ s/1/0/g' \
 			-i common.mk || die
 	fi
 
