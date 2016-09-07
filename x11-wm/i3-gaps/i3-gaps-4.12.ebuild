@@ -44,9 +44,11 @@ RDEPEND="${CDEPEND}
 
 DOCS=( RELEASE-NOTES-${PV} )
 
-src_prepare() {
+pkg_setup() {
 	mkdir "${S}"
+}
 
+src_prepare() {
 	epatch "${FILESDIR}"/${P}-pango.patch
 
 	if ! use pango; then
