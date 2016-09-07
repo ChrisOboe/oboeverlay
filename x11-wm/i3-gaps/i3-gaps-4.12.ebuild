@@ -16,6 +16,8 @@ KEYWORDS="~amd64 ~arm ~x86"
 IUSE="+cairo +pango"
 REQUIRED_USE="pango? ( cairo )"
 
+S=${WORKDIR}/i3
+
 CDEPEND="dev-libs/libev
 	dev-libs/libpcre
 	>=dev-libs/yajl-2.0.3
