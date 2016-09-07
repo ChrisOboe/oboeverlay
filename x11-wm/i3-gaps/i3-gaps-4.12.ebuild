@@ -46,7 +46,8 @@ src_prepare() {
 	# i3 does some really ugly things.
 	# remove dependency from git
 	# https://github.com/Airblader/i3/issues/26
-	echo ${PV} > ${WORKDIR}/I3_VERSION
+	sed -e 's/\$(shell [ -f \$(TOPDIR)\/I3_VERSION ] && cat \$(TOPDIR)\/I3_VERSION)/'"${PV}"'/g' -i common.mk
+	sed -e 's/\$(shell [ -f \$(TOPDIR)\/VERSION ] && cat \$(TOPDIR)\/VERSION)/'"${PV}"'/g' -i common.mk
 
 	if ! use pango; then
 		sed -e '/^PANGO_.*pangocairo/d' \
