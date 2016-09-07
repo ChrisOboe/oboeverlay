@@ -13,8 +13,8 @@ SRC_URI="https://github.com/Airblader/i3/archive/${PV}.tar.gz"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~arm ~x86"
-IUSE="+cairo +pango"
-REQUIRED_USE="pango? ( cairo )"
+IUSE="+pango"
+REQUIRED_USE=""
 
 S=${WORKDIR}/i3-${PV}
 
@@ -65,11 +65,13 @@ src_prepare() {
 
 src_compile() {
 	emake V=1 CC="$(tc-getCC)" AR="$(tc-getAR)"
+	make mans
 }
 
 src_install() {
 	default
 	dohtml -r docs/*
+	doman man/*.1
 	exeinto /etc/X11/Sessions
 	doexe "${T}"/i3wm
 }
