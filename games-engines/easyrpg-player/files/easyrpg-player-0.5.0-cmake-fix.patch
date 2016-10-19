@@ -1,0 +1,12 @@
+diff -Naur a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2016-09-20 22:29:56.358887622 +0200
++++ b/CMakeLists.txt	2016-09-20 22:32:41.748884038 +0200
+@@ -491,7 +491,7 @@
+ 		message(STATUS "WAV playback:  SDL2_mixer")
+ 	endif()
+ 
+-	if(wildmidi_FOUND)
++	if(WildMidi_FOUND)
+ 		message(STATUS "MIDI playback: WildMidi")
+ 	elseif(${PLAYER_ENABLE_FMMIDI} MATCHES "ON")
+ 		message(STATUS "MIDI playback: built-in (FmMidi)")

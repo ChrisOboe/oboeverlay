@@ -15,7 +15,7 @@ KEYWORDS="~amd64 ~x86"
 
 S="${WORKDIR}/Player-${PV}"
 
-RDEPENT="dev-libs/liblcf
+RDEPENT="=dev-libs/liblcf-0.4.1
 	media-libs/libsdl2
 	media-libs/sdl2-mixer
 	x11-libs/pixman
@@ -23,8 +23,6 @@ RDEPENT="dev-libs/liblcf
 	sys-libs/zlib
 	>=media-libs/freetype-2
 	media-sound/mpg123
-	media-sound/wildmidi
-	media-libs/libvorbis
 	media-libs/libsndfile"
 
 DEPENT="${RDEPEND}
