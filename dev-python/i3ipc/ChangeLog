@@ -1,0 +1,5 @@
+*i3ipc-1.2.0 (24 Aug 2016)
+
+  24 Aug 2016; Naohiro Aota <naota@gentoo.org> +i3ipc-1.2.0.ebuild,
+  +metadata.xml:
+  dev-python/i3ipc: new package
