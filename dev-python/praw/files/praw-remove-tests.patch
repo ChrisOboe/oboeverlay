@@ -1,0 +1,10 @@
+diff -Naur a/setup.py b/setup.py
+--- a/setup.py	2016-11-29 02:50:30.000000000 +0100
++++ b/setup.py	2016-12-04 20:13:41.540146708 +0100
+@@ -52,6 +52,5 @@
+                      'betamax-serializers >=0.2, <0.3',
+                      'mock ==1.0.1',
+                      'pytest ==2.8.7'],
+-      test_suite='tests',
+       url='https://praw.readthedocs.org/',
+       version=VERSION)

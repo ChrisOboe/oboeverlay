@@ -1,0 +1,12 @@
+diff -Naur a/setup.py b/setup.py
+--- a/setup.py	2016-10-18 04:27:09.000000000 +0200
++++ b/setup.py	2016-12-04 20:34:06.120166387 +0100
+@@ -3,7 +3,7 @@
+ 
+ from version import __version__ as version
+ 
+-requirements = ['praw==3.5.0', 'six', 'requests', 'kitchen', 'beautifulsoup4',
++requirements = ['praw>=3.5, <4', 'six', 'requests', 'kitchen', 'beautifulsoup4',
+                 'mailcap-fix']
+ 
+ setuptools.setup(
