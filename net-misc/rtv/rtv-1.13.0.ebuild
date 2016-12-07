@@ -26,7 +26,8 @@ RDEPEND="
 	dev-python/mailcap-fix[${PYTHON_USEDEP}]
 	dev-python/kitchen[${PYTHON_USEDEP}]
 	dev-python/beautifulsoup[${PYTHON_USEDEP}]
-	dev-python/requests[${PYTHON_USEDEP}]"
+	dev-python/requests[${PYTHON_USEDEP}]
+	dev-lang/python:3[ncurses]"
 
 src_unpack() {
     unpack ${A}
