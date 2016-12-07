@@ -17,7 +17,7 @@ KEYWORDS="~amd64 ~x86"
 IUSE=""
 
 DEPEND=""
-RDEPEND=">=dev-python/decorator-3.4.2
+RDEPEND=">=dev-python/decorator-4.0.9
 		>=dev-python/requests-2.3.0
 		>=dev-python/six-1.4
 		>=dev-python/update-checker-0.11"
