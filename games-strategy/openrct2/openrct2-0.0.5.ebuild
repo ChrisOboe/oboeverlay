@@ -13,7 +13,7 @@ SRC_URI="https://github.com/OpenRCT2/OpenRCT2/archive/v${PV}.tar.gz -> ${P}.tar.
 LICENSE="GPL-3"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="network twitch opengl libressl"
+IUSE="libressl"
 
 DEPEND="
 	media-libs/libsdl2
@@ -22,24 +22,13 @@ DEPEND="
 	media-libs/libpng
 	sys-libs/zlib
 	dev-libs/jansson
-	twitch? ( net-misc/curl )
-	network? (
-		libressl? ( dev-libs/libressl:0= )
-		!libressl? ( dev-libs/openssl:0= )
-	)
-	opengl? ( virtual/opengl )
+	net-misc/curl
+	libressl? ( dev-libs/libressl:0= )
+	!libressl? ( dev-libs/openssl:0= )
+	virtual/opengl
 "
 RDEPEND="${DEPEND}"
 
 MAKEOPTS+=" -j1"
 
 S="${WORKDIR}/OpenRCT2-${PV}"
-
-src_configure() {
-	local mycmakeargs=(
-		-DDISABLE_NETWORK="$(usex network)"
-		-DDISABLE_HTTP_TWITCH="$(usex twitch)"
-		-DDISABLE_OPENGL="$(usex opengl)"
-	)
-	cmake-utils_src_configure
-}
