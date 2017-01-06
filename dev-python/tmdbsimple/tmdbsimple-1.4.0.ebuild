@@ -19,3 +19,5 @@ IUSE=""
 
 DEPEND="dev-python/setuptools[${PYTHON_USEDEP}]"
 RDEPEND="dev-python/requests[${PYTHON_USEDEP}]"
+
+PATCHES[0]="${FILESDIR}/${P}-dependency-fix.patch"
