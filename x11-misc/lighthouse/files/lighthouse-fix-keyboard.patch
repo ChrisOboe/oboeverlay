@@ -1,0 +1,26 @@
+\ Kein Zeilenumbruch am Dateiende.
+diff -Naur a/src/lighthouse.c b/src/lighthouse.c
+--- a/src/lighthouse.c	2017-02-01 17:35:14.806817056 +0100
++++ b/src/lighthouse.c	2017-02-01 17:48:09.466828550 +0100
+@@ -928,10 +928,7 @@
+         break;
+       }
+       case XCB_KEY_PRESS: {
+-        break;
+-      }
+-      case XCB_KEY_RELEASE: {
+-        xcb_key_release_event_t *k = (xcb_key_release_event_t *)event;
++        xcb_key_press_event_t *k = (xcb_key_press_event_t *)event;
+         xcb_keysym_t key = xcb_key_press_lookup_keysym(keysyms, k, k->state & ~XCB_MOD_MASK_2 & ~XCB_MOD_MASK_CONTROL);
+         int32_t ret = process_key_stroke(window, query_string, &query_index, &query_cursor_index, key, k->state, connection, cairo_context, cairo_surface, to_child);
+         if (ret <= 0) {
+@@ -940,6 +937,9 @@
+         }
+         break;
+       }
++      case XCB_KEY_RELEASE: {
++        break;
++      }
+       case XCB_EVENT_MASK_BUTTON_PRESS: {
+         /* Get the input focus. */
+         xcb_void_cookie_t focus_cookie = xcb_set_input_focus_checked(connection, XCB_INPUT_FOCUS_POINTER_ROOT, window, XCB_CURRENT_TIME);

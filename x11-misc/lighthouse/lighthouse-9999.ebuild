@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-EAPI=5
+EAPI=6
 
 inherit git-r3
 
@@ -18,6 +18,8 @@ DEPEND="x11-libs/libX11
 x11-libs/libxcb
 x11-libs/cairo"
 RDEPEND="${DEPEND}"
+
+PATCHES[0]="${FILESDIR}/${PN}-fix-keyboard.patch"
 
 src_compile() {
 	if [ -f Makefile ] || [ -f GNUmakefile ] || [ -f makefile ]; then
@@ -38,3 +40,5 @@ pkg_postinst() {
 	elog "as user configuration file."
 	echo
 }
+
+
