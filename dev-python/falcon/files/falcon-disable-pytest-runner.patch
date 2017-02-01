@@ -1,0 +1,11 @@
+diff -Naur a/setup.py b/setup.py
+--- a/setup.py	2016-10-27 18:47:54.000000000 +0200
++++ b/setup.py	2017-01-25 13:44:18.448028161 +0100
+@@ -104,7 +104,6 @@
+     include_package_data=True,
+     zip_safe=False,
+     install_requires=REQUIRES,
+-    setup_requires=['pytest-runner'],
+     cmdclass=cmdclass,
+     ext_modules=ext_modules,
+     tests_require=['ddt', 'testtools', 'requests', 'pyyaml', 'pytest'],
