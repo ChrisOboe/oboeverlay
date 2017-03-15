@@ -20,5 +20,5 @@ IUSE=""
 DEPEND="dev-python/setuptools[${PYTHON_USEDEP}]"
 RDEPEND="
 	dev-python/requests[${PYTHON_USEDEP}]
-	dev-python/falcon[${PYTHON_USEDEP}]
+	=dev-python/falcon-1.0.0[${PYTHON_USEDEP}]
 "
