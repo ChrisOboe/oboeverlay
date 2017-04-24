@@ -1,6 +1,6 @@
 EAPI="6"
 
-inherit eutils git-r3
+inherit eutils savedconfig git-r3
 
 DESCRIPTION="xterm for wayland"
 HOMEPAGE="http://github.com/majestrate/wterm"
@@ -9,7 +9,7 @@ EGIT_REPO_URI="https://github.com/majestrate/wterm"
 LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
-IUSE="video_cards_intel video_cards_nouveau"
+IUSE="video_cards_intel video_cards_nouveau savedconfig"
 
 RDEPEEND="
 	media-libs/fontconfig
@@ -28,9 +28,13 @@ src_configure() {
 	if ! use video_cards_nouveau; then
 		sed -e 's/ENABLE_NOUVEAU = 1/ENABLE_NOUVEAU = 0/g' -i config.mk || die
 	fi
+
+	restore_config include/config.h
 }
 
 src_install() {
 	dobin wterm
-	tic -s wterm.info
+	mkdir -p ${D}/usr/share/terminfo
+	tic -s -o ${D}/usr/share/terminfo wterm.info || die
+	save_config include/config.h
 }
