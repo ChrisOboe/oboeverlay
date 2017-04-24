@@ -59,6 +59,7 @@ DEPEND="${RDEPEND}
 S=${WORKDIR}/${MY_P}
 
 src_prepare() {
+	epatch "${FILESDIR}/${P}-python3-replaygain.patch"
 	# remove plugins that do not have appropriate dependencies installed
 	for flag in bpd chroma convert discogs lastgenre lastimport mpdstats replaygain thumbnails web; do
 		if ! use ${flag}; then
