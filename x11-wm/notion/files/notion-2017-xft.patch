@@ -1,0 +1,637 @@
+diff -Naur a/de/brush.c b/de/brush.c
+--- a/de/brush.c	2017-05-05 14:55:07.000000000 +0000
++++ b/de/brush.c	2017-05-15 18:36:45.700629245 +0000
+@@ -48,6 +48,7 @@
+ 
+     gr_stylespec_init(&brush->current_attr);
+ 
++    brush->draw=NULL;
+     style->usecount++;
+ 
+     if(!grbrush_init(&(brush->grbrush))){
+@@ -128,6 +129,8 @@
+ {
+     destyle_unref(brush->d);
+     brush->d=NULL;
++    if(brush->draw!=NULL)
++        XftDrawDestroy(brush->draw);
+     gr_stylespec_unalloc(&brush->current_attr);
+     grbrush_deinit(&(brush->grbrush));
+ }
+@@ -138,7 +141,18 @@
+     destroy_obj((Obj*)brush);
+ }
+ 
++XftDraw *debrush_get_draw(DEBrush *brush, Drawable d)
++{
++    if(brush->draw==NULL)
++        brush->draw=XftDrawCreate(ioncore_g.dpy, d,
++                                  XftDEDefaultVisual(),
++                                  DefaultColormap(ioncore_g.dpy,
++                                  0));
++    else
++        XftDrawChange(brush->draw, d);
+ 
++    return brush->draw;
++}
+ /*}}}*/
+ 
+ 
+diff -Naur a/de/brush.h b/de/brush.h
+--- a/de/brush.h	2017-05-05 14:55:07.000000000 +0000
++++ b/de/brush.h	2017-05-15 18:39:08.557310582 +0000
+@@ -15,6 +15,8 @@
+ #include <ioncore/gr.h>
+ #include <ioncore/rectangle.h>
+ 
++#include <X11/Xft/Xft.h>
++
+ INTRCLASS(DEBrush);
+ 
+ #include "style.h"
+@@ -33,6 +35,7 @@
+ DECLCLASS(DEBrush){
+     GrBrush grbrush;
+     DEStyle *d;
++	XftDraw *draw;
+     DEBrushExtrasFn *extras_fn;
+     int indicator_w;
+     Window win;
+@@ -108,5 +111,6 @@
+ extern void debrush_fill_area(DEBrush *brush, const WRectangle *geom);
+ extern void debrush_clear_area(DEBrush *brush, const WRectangle *geom);
+ 
++XftDraw *debrush_get_draw(DEBrush *brush, Drawable d);
+ 
+ #endif /* ION_DE_BRUSH_H */
+diff -Naur a/de/colour.c b/de/colour.c
+--- a/de/colour.c	2017-05-05 14:55:07.000000000 +0000
++++ b/de/colour.c	2017-05-15 18:43:38.340671600 +0000
+@@ -12,57 +12,41 @@
+ 
+ bool de_alloc_colour(WRootWin *rootwin, DEColour *ret, const char *name)
+ {
+-    XColor c;
+-    bool ok=FALSE;
+-
+     if(name==NULL)
+         return FALSE;
+ 
+-    if(XParseColor(ioncore_g.dpy, rootwin->default_cmap, name, &c)){
+-        ok=XAllocColor(ioncore_g.dpy, rootwin->default_cmap, &c);
+-        if(ok)
+-            *ret=c.pixel;
+-    }
+-
+-    return ok;
++    return XftColorAllocName(
++        ioncore_g.dpy,
++        XftDEDefaultVisual(),
++        rootwin->default_cmap,
++        name,
++        ret);
+ }
+ 
+ 
+ bool de_duplicate_colour(WRootWin *rootwin, DEColour in, DEColour *out)
+ {
+-    XColor c;
+-    c.pixel=in;
+-    XQueryColor(ioncore_g.dpy, rootwin->default_cmap, &c);
+-    if(XAllocColor(ioncore_g.dpy, rootwin->default_cmap, &c)){
+-        *out=c.pixel;
+-        return TRUE;
+-    }
+-    return FALSE;
++    return XftColorAllocValue(
++        ioncore_g.dpy,
++        XftDEDefaultVisual(),
++        rootwin->default_cmap,
++        &(in.color),
++        out);
+ }
+ 
+ 
+ void de_free_colour_group(WRootWin *rootwin, DEColourGroup *cg)
+ {
+-    DEColour pixels[5];
+-
+-    pixels[0]=cg->bg;
+-    pixels[1]=cg->fg;
+-    pixels[2]=cg->hl;
+-    pixels[3]=cg->sh;
+-    pixels[4]=cg->pad;
+-
+-    XFreeColors(ioncore_g.dpy, rootwin->default_cmap, pixels, 5, 0);
+-
+-    gr_stylespec_unalloc(&cg->spec);
++    de_free_colour(rootwin, cg->bg);
++    de_free_colour(rootwin, cg->fg);
++    de_free_colour(rootwin, cg->hl);
++    de_free_colour(rootwin, cg->sh);
++    de_free_colour(rootwin, cg->pad);
+ }
+ 
+ 
+ void de_free_colour(WRootWin *rootwin, DEColour col)
+ {
+-    DEColour pixels[1];
+-
+-    pixels[0]=col;
+-
+-    XFreeColors(ioncore_g.dpy, rootwin->default_cmap, pixels, 1, 0);
++    XftColorFree(ioncore_g.dpy, XftDEDefaultVisual(), rootwin->default_cmap, &col);
+ }
+ 
+diff -Naur a/de/colour.h b/de/colour.h
+--- a/de/colour.h	2017-05-05 14:55:07.000000000 +0000
++++ b/de/colour.h	2017-05-15 18:45:39.164017323 +0000
+@@ -12,12 +12,12 @@
+ #include <ioncore/common.h>
+ #include <ioncore/global.h>
+ #include <ioncore/rootwin.h>
+-
++#include <X11/Xft/Xft.h>
+ 
+ INTRSTRUCT(DEColourGroup);
+ 
+ 
+-typedef unsigned long DEColour;
++typedef XftColor DEColour;
+ 
+ 
+ DECLSTRUCT(DEColourGroup){
+@@ -34,5 +34,6 @@
+ bool de_duplicate_colour(WRootWin *rootwin, DEColour in, DEColour *out);
+ void de_free_colour_group(WRootWin *rootwin, DEColourGroup *cg);
+ void de_free_colour(WRootWin *rootwin, DEColour col);
++#define XftDEDefaultVisual()    DefaultVisual(ioncore_g.dpy, 0)
+ 
+ #endif /* ION_DE_COLOUR_H */
+diff -Naur a/de/draw.c b/de/draw.c
+--- a/de/draw.c	2017-05-05 14:55:07.000000000 +0000
++++ b/de/draw.c	2017-05-15 18:51:24.797386121 +0000
+@@ -84,7 +84,7 @@
+     w--;
+     h--;
+ 
+-    XSetForeground(ioncore_g.dpy, gc, tlc);
++    XSetForeground(ioncore_g.dpy, gc, tlc.pixel);
+ 
+ 
+     a=(br!=0);
+@@ -104,7 +104,7 @@
+     }
+ 
+ 
+-    XSetForeground(ioncore_g.dpy, gc, brc);
++    XSetForeground(ioncore_g.dpy, gc, brc.pixel);
+ 
+     a=(tl!=0);
+     b=0;
+@@ -141,23 +141,23 @@
+                             GrBorderLine line)
+ {
+     if(line==GR_BORDERLINE_LEFT && geom->h>0 && tl>0){
+-        XSetForeground(ioncore_g.dpy, gc, tlc);
+-        XSetBackground(ioncore_g.dpy, gc, tlc);
++        XSetForeground(ioncore_g.dpy, gc, tlc.pixel);
++        XSetBackground(ioncore_g.dpy, gc, tlc.pixel);
+         XFillRectangle(ioncore_g.dpy, win, gc, geom->x, geom->y, tl, geom->h);
+         geom->x+=tl;
+     }else if(line==GR_BORDERLINE_TOP && geom->w>0 && tl>0){
+-        XSetForeground(ioncore_g.dpy, gc, tlc);
+-        XSetBackground(ioncore_g.dpy, gc, tlc);
++        XSetForeground(ioncore_g.dpy, gc, tlc.pixel);
++        XSetBackground(ioncore_g.dpy, gc, tlc.pixel);
+         XFillRectangle(ioncore_g.dpy, win, gc, geom->x, geom->y, geom->w, tl);
+         geom->y+=tl;
+     }else if(line==GR_BORDERLINE_RIGHT && geom->h>0 && br>0){
+-        XSetForeground(ioncore_g.dpy, gc, brc);
+-        XSetBackground(ioncore_g.dpy, gc, brc);
++        XSetForeground(ioncore_g.dpy, gc, brc.pixel);
++        XSetBackground(ioncore_g.dpy, gc, brc.pixel);
+         XFillRectangle(ioncore_g.dpy, win, gc, geom->x+geom->w-br, geom->y, br, geom->h);
+         geom->w-=br;
+     }else if(line==GR_BORDERLINE_BOTTOM && geom->w>0 && br>0){
+-        XSetForeground(ioncore_g.dpy, gc, brc);
+-        XSetBackground(ioncore_g.dpy, gc, brc);
++        XSetForeground(ioncore_g.dpy, gc, brc.pixel);
++        XSetBackground(ioncore_g.dpy, gc, brc.pixel);
+         XFillRectangle(ioncore_g.dpy, win, gc, geom->x, geom->y+geom->h-br, geom->w, br);
+         geom->h-=br;
+     }
+@@ -388,7 +388,7 @@
+     }
+ 
+     if(ISSET(a2, GR_ATTR(tagged)) || ISSET(a1, GR_ATTR(tagged))){
+-        XSetForeground(ioncore_g.dpy, d->copy_gc, cg->fg);
++        XSetForeground(ioncore_g.dpy, d->copy_gc, cg->fg.pixel);
+ 
+         copy_masked(brush, d->tag_pixmap, brush->win, 0, 0,
+                     d->tag_pixmap_w, d->tag_pixmap_h,
+@@ -437,7 +437,7 @@
+     GC gc=brush->d->normal_gc;
+ 
+     if(TRUE/*needfill*/){
+-        XSetForeground(ioncore_g.dpy, gc, cg->bg);
++        XSetForeground(ioncore_g.dpy, gc, cg->bg.pixel);
+         XFillRectangle(ioncore_g.dpy, brush->win, gc, geom->x, geom->y,
+                        geom->w, geom->h);
+     }
+@@ -605,7 +605,7 @@
+         attr.background_pixmap=ParentRelative;
+     }else{
+         attrflags=CWBackPixel;
+-        attr.background_pixel=brush->d->cgrp.bg;
++        attr.background_pixel=brush->d->cgrp.bg.pixel;
+     }
+ 
+     XChangeWindowAttributes(ioncore_g.dpy, brush->win, attrflags, &attr);
+@@ -621,7 +621,7 @@
+     if(cg==NULL)
+         return;
+ 
+-    XSetForeground(ioncore_g.dpy, gc, cg->bg);
++    XSetForeground(ioncore_g.dpy, gc, cg->bg.pixel);
+     XFillRectangle(ioncore_g.dpy, brush->win, gc,
+                    geom->x, geom->y, geom->w, geom->h);
+ }
+diff -Naur a/de/font.c b/de/font.c
+--- a/de/font.c	2017-05-05 14:55:07.000000000 +0000
++++ b/de/font.c	2017-05-15 19:16:49.977542618 +0000
+@@ -13,7 +13,6 @@
+ #include <ioncore/common.h>
+ #include <ioncore/log.h>
+ #include "font.h"
+-#include "fontset.h"
+ #include "brush.h"
+ #include "precompose.h"
+ 
+@@ -106,6 +105,7 @@
+ 
+ DEFont *de_load_font(const char *fontname)
+ {
++    XftFont *font;
+     DEFont *fnt;
+     XFontSet fontset=NULL;
+     XFontStruct *fontstruct=NULL;
+@@ -121,30 +121,18 @@
+         }
+     }
+ 
+-    if(ioncore_g.use_mb && !(ioncore_g.enc_utf8 && iso10646_font(fontname))){
+-        LOG(DEBUG, FONT, "Loading fontset %s", fontname);
+-        fontset=de_create_font_set(fontname);
+-        if(fontset!=NULL){
+-            if(XContextDependentDrawing(fontset)){
+-                warn(TR("Fontset for font pattern '%s' implements context "
+-                        "dependent drawing, which is unsupported. Expect "
+-                        "clutter."), fontname);
+-            }
+-        }
++#define CF_FALLBACK_FONT_NAME "fixed"
++    if(strncmp(fontname, "xft:", 4)==0){
++        font=XftFontOpenName(ioncore_g.dpy, DefaultScreen(ioncore_g.dpy), fontname+4);
+     }else{
+-        LOG(DEBUG, FONT, "Loading fontstruct %s", fontname);
+-        fontstruct=XLoadQueryFont(ioncore_g.dpy, fontname);
++        font=XftFontOpenXlfd(ioncore_g.dpy, DefaultScreen(ioncore_g.dpy), fontname);
+     }
+ 
+-    if(fontstruct==NULL && fontset==NULL){
+-        if(strcmp(fontname, default_fontname)!=0){
+-            DEFont *fnt;
+-            LOG(WARN, FONT, TR("Could not load font \"%s\", trying \"%s\""),
+-                 fontname, default_fontname);
+-            fnt=de_load_font(default_fontname);
+-            if(fnt==NULL)
+-                LOG(WARN, FONT, TR("Failed to load fallback font."));
+-            return fnt;
++    if(font==NULL){
++        if(strcmp(fontname, CF_FALLBACK_FONT_NAME)!=0){
++            warn(TR("Could not load font \"%s\", trying \"%s\""),
++             fontname, CF_FALLBACK_FONT_NAME);
++            return de_load_font(CF_FALLBACK_FONT_NAME);
+         }
+         return NULL;
+     }
+@@ -154,8 +142,7 @@
+     if(fnt==NULL)
+         return NULL;
+ 
+-    fnt->fontset=fontset;
+-    fnt->fontstruct=fontstruct;
++    fnt->font=font;
+     fnt->pattern=scopy(fontname);
+     fnt->next=NULL;
+     fnt->prev=NULL;
+@@ -175,11 +162,6 @@
+     style->font=font;
+     font->refcount++;
+ 
+-    if(style->font->fontstruct!=NULL){
+-        XSetFont(ioncore_g.dpy, style->normal_gc,
+-                 style->font->fontstruct->fid);
+-    }
+-
+     return TRUE;
+ }
+ 
+@@ -194,11 +176,6 @@
+     if(style->font==NULL)
+         return FALSE;
+ 
+-    if(style->font->fontstruct!=NULL){
+-        XSetFont(ioncore_g.dpy, style->normal_gc,
+-                 style->font->fontstruct->fid);
+-    }
+-
+     return TRUE;
+ }
+ 
+@@ -208,10 +185,8 @@
+     if(--font->refcount!=0)
+         return;
+ 
+-    if(font->fontset!=NULL)
+-        XFreeFontSet(ioncore_g.dpy, font->fontset);
+-    if(font->fontstruct!=NULL)
+-        XFreeFont(ioncore_g.dpy, font->fontstruct);
++    if(font->font!=NULL)
++        XftFontClose(ioncore_g.dpy, font->font);
+     if(font->pattern!=NULL)
+         free(font->pattern);
+ 
+@@ -239,19 +214,10 @@
+ 
+ void defont_get_font_extents(DEFont *font, GrFontExtents *fnte)
+ {
+-    if(font->fontset!=NULL){
+-        XFontSetExtents *ext=XExtentsOfFontSet(font->fontset);
+-        if(ext==NULL)
+-            goto fail;
+-        fnte->max_height=ext->max_logical_extent.height;
+-        fnte->max_width=ext->max_logical_extent.width;
+-        fnte->baseline=-ext->max_logical_extent.y;
+-        return;
+-    }else if(font->fontstruct!=NULL){
+-        XFontStruct *fnt=font->fontstruct;
+-        fnte->max_height=fnt->ascent+fnt->descent;
+-        fnte->max_width=fnt->max_bounds.width;
+-        fnte->baseline=fnt->ascent;
++    if(font->font!=NULL){
++        fnte->max_height=font->font->ascent+font->font->descent;
++        fnte->max_width=font->font->max_advance_width;
++        fnte->baseline=font->font->ascent;
+         return;
+     }
+ 
+@@ -271,30 +237,13 @@
+ 
+ uint defont_get_text_width(DEFont *font, const char *text, uint len)
+ {
+-    if(font->fontset!=NULL){
+-        XRectangle lext;
+-#ifdef CF_DE_USE_XUTF8
++    if(font->font!=NULL){
++        XGlyphInfo extents;
+         if(ioncore_g.enc_utf8)
+-            Xutf8TextExtents(font->fontset, text, len, NULL, &lext);
++            XftTextExtentsUtf8(ioncore_g.dpy, font->font, (XftChar8*)text, len, &extents);
+         else
+-#endif
+-            XmbTextExtents(font->fontset, text, len, NULL, &lext);
+-        return lext.width;
+-    }else if(font->fontstruct!=NULL){
+-        if(ioncore_g.enc_utf8){
+-            XChar2b *str16; int len16=0;
+-            uint res;
+-
+-            toucs(text, len, &str16, &len16);
+-
+-            res=XTextWidth16(font->fontstruct, str16, len16);
+-
+-            free(str16);
+-
+-            return res;
+-        }else{
+-            return XTextWidth(font->fontstruct, text, len);
+-        }
++            XftTextExtents8(ioncore_g.dpy, font->font, (XftChar8*)text, len, &extents);
++        return extents.xOff;
+     }else{
+         return 0;
+     }
+@@ -306,63 +255,39 @@
+ 
+ /*{{{ String drawing */
+ 
+-
+-void debrush_do_draw_string_default(DEBrush *brush, int x, int y,
+-                                    const char *str, int len, bool needfill,
++void debrush_do_draw_string_default(DEBrush *brush,
++                                    int x, int y, const char *str,
++                                    int len, bool needfill,
+                                     DEColourGroup *colours)
+ {
++    Window win = brush->win;
+     GC gc=brush->d->normal_gc;
++    XftDraw *draw;
++    XftFont *font;
+ 
+     if(brush->d->font==NULL)
+         return;
+ 
+-    XSetForeground(ioncore_g.dpy, gc, colours->fg);
++    font=brush->d->font->font;
++    draw=debrush_get_draw(brush, win);
+ 
+-    if(!needfill){
+-        if(brush->d->font->fontset!=NULL){
+-#ifdef CF_DE_USE_XUTF8
+-            if(ioncore_g.enc_utf8)
+-                Xutf8DrawString(ioncore_g.dpy, brush->win,
+-                                brush->d->font->fontset,
+-                                gc, x, y, str, len);
+-            else
+-#endif
+-                XmbDrawString(ioncore_g.dpy, brush->win,
+-                              brush->d->font->fontset,
+-                              gc, x, y, str, len);
+-        }else if(brush->d->font->fontstruct!=NULL){
+-            if(ioncore_g.enc_utf8){
+-                XChar2b *str16; int len16=0;
+-                toucs(str, len, &str16, &len16);
+-                XDrawString16(ioncore_g.dpy, brush->win, gc, x, y, str16, len16);
+-                free(str16);
+-            }else{
+-                XDrawString(ioncore_g.dpy, brush->win, gc, x, y, str, len);
+-            }
++    if(needfill){
++        XGlyphInfo extents;
++        if(ioncore_g.enc_utf8){
++            XftTextExtentsUtf8(ioncore_g.dpy, font, (XftChar8*)str, len,
++                               &extents);
++        }else{
++            XftTextExtents8(ioncore_g.dpy, font, (XftChar8*)str, len, &extents);
++            XftDrawRect(draw, &(colours->bg), x-extents.x, y-extents.y,
++                        extents.width+10, extents.height);
+         }
++    }
++
++    if(ioncore_g.enc_utf8){
++        XftDrawStringUtf8(draw, &(colours->fg), font, x, y, (XftChar8*)str,
++                          len);
+     }else{
+-        XSetBackground(ioncore_g.dpy, gc, colours->bg);
+-        if(brush->d->font->fontset!=NULL){
+-#ifdef CF_DE_USE_XUTF8
+-            if(ioncore_g.enc_utf8)
+-                Xutf8DrawImageString(ioncore_g.dpy, brush->win,
+-                                     brush->d->font->fontset,
+-                                     gc, x, y, str, len);
+-            else
+-#endif
+-                XmbDrawImageString(ioncore_g.dpy, brush->win,
+-                                   brush->d->font->fontset,
+-                                   gc, x, y, str, len);
+-        }else if(brush->d->font->fontstruct!=NULL){
+-            if(ioncore_g.enc_utf8){
+-                XChar2b *str16; int len16=0;
+-                toucs(str, len, &str16, &len16);
+-                XDrawImageString16(ioncore_g.dpy, brush->win, gc, x, y, str16, len16);
+-                free(str16);
+-            }else{
+-                XDrawImageString(ioncore_g.dpy, brush->win, gc, x, y, str, len);
+-            }
+-        }
++        XftDrawString8(draw, &(colours->fg), font, x, y, (XftChar8*)str, len);
+     }
+ }
+ 
+diff -Naur a/de/font.h b/de/font.h
+--- a/de/font.h	2017-05-05 14:55:07.000000000 +0000
++++ b/de/font.h	2017-05-15 19:04:09.957464633 +0000
+@@ -12,6 +12,7 @@
+ 
+ #include <ioncore/common.h>
+ #include <ioncore/gr.h>
++#include <X11/Xft/Xft.h>
+ 
+ INTRSTRUCT(DEFont);
+ 
+@@ -27,6 +28,7 @@
+     int refcount;
+     XFontSet fontset;
+     XFontStruct *fontstruct;
++    XftFont *font;
+     DEFont *next, *prev;
+ };
+ 
+diff -Naur a/de/init.c b/de/init.c
+--- a/de/init.c	2017-05-05 14:55:07.000000000 +0000
++++ b/de/init.c	2017-05-15 19:06:40.390813404 +0000
+@@ -166,16 +166,21 @@
+     bool bgset;
+     DEColour padinh;
+ 
++	DEColour black, white;
++
++    de_alloc_colour(rootwin, &black, "black");
++    de_alloc_colour(rootwin, &white, "white");
++
+     de_get_colour(rootwin, &(cg->hl), tab, "highlight_colour",
+-                  (based_on ? based_on->cgrp.hl : DE_WHITE(rootwin)));
++                  (based_on ? based_on->cgrp.hl : white));
+     de_get_colour(rootwin, &(cg->sh), tab, "shadow_colour",
+-                  (based_on ? based_on->cgrp.sh : DE_WHITE(rootwin)));
++                  (based_on ? based_on->cgrp.sh : white));
+     de_get_colour(rootwin, &(cg->fg), tab, "foreground_colour",
+-                  (based_on ? based_on->cgrp.fg : DE_WHITE(rootwin)));
++                  (based_on ? based_on->cgrp.fg : white));
+     bgset=de_get_colour(rootwin, &(cg->bg), tab, "background_colour",
+-                        (based_on ? based_on->cgrp.bg : DE_BLACK(rootwin)));
++                        (based_on ? based_on->cgrp.bg : black));
+ 
+-    padinh=(based_on ? based_on->cgrp.pad : DE_WHITE(rootwin));
++    padinh=(based_on ? based_on->cgrp.pad : white);
+ 
+     de_get_colour_(rootwin, &(cg->pad), tab, "padding_colour",
+                    (bgset ? cg->bg : padinh), padinh);
+diff -Naur a/de/style.c b/de/style.c
+--- a/de/style.c	2017-05-05 14:55:07.000000000 +0000
++++ b/de/style.c	2017-05-15 19:09:07.584161843 +0000
+@@ -70,10 +70,6 @@
+     /*gcv.function=GXclear;*/
+     gcv.stipple=stipple_pixmap;
+     gcvmask=GCFillStyle|GCStipple/*|GCFunction*/;
+-    if(style->font!=NULL && style->font->fontstruct!=NULL){
+-        gcv.font=style->font->fontstruct->fid;
+-        gcvmask|=GCFont;
+-    }
+ 
+     style->stipple_gc=XCreateGC(dpy, root, gcvmask, &gcv);
+     XCopyGC(dpy, style->normal_gc,
+@@ -201,6 +197,11 @@
+ 
+ bool destyle_init(DEStyle *style, WRootWin *rootwin, const char *name)
+ {
++    DEColour black, white;
++
++    de_alloc_colour(rootwin, &black, "black");
++    de_alloc_colour(rootwin, &white, "white");
++
+     if(!gr_stylespec_load(&style->spec, name))
+         return FALSE;
+ 
+@@ -223,11 +224,11 @@
+     style->textalign=DEALIGN_CENTER;
+ 
+     style->cgrp_alloced=FALSE;
+-    style->cgrp.bg=DE_BLACK(rootwin);
+-    style->cgrp.pad=DE_BLACK(rootwin);
+-    style->cgrp.fg=DE_WHITE(rootwin);
+-    style->cgrp.hl=DE_WHITE(rootwin);
+-    style->cgrp.sh=DE_WHITE(rootwin);
++    style->cgrp.bg=black;
++    style->cgrp.pad=black;
++    style->cgrp.fg=white;
++    style->cgrp.hl=white;
++    style->cgrp.sh=white;
+     gr_stylespec_init(&style->cgrp.spec);
+ 
+     style->font=NULL;
+diff -Naur a/etc/look_newviolet.lua b/etc/look_newviolet.lua
+--- a/etc/look_newviolet.lua	2017-05-05 14:55:07.000000000 +0000
++++ b/etc/look_newviolet.lua	2017-05-15 19:10:28.240836785 +0000
+@@ -22,13 +22,13 @@
+     border_style = "elevated",
+     border_sides = "tb",
+ 
+-    font = "-*-helvetica-medium-r-normal-*-14-*-*-*-*-*-*-*",
++    font = "xft:Sans-12:bold",
+     text_align = "center",
+ })
+ 
+ 
+ de.defstyle("tab", {
+-    font = "-*-helvetica-medium-r-normal-*-12-*-*-*-*-*-*-*",
++    font = "xft:Sans-12:bold",
+ 
+     de.substyle("active-selected", {
+         highlight_colour = "#aaaacc",
+diff -Naur a/system-autodetect.mk b/system-autodetect.mk
+--- a/system-autodetect.mk	2017-05-05 14:55:07.000000000 +0000
++++ b/system-autodetect.mk	2017-05-15 19:11:27.104176159 +0000
+@@ -84,8 +84,8 @@
+ # SunOS/Solaris
+ #X11_PREFIX ?= /usr/openwin
+ 
+-X11_LIBS=$(shell $(PKG_CONFIG) --libs x11 xext)
+-X11_INCLUDES=$(shell $(PKG_CONFIG) --cflags-only-I x11 xext)
++X11_LIBS=$(shell $(PKG_CONFIG) --libs x11 xext xft)
++X11_INCLUDES=$(shell $(PKG_CONFIG) --cflags-only-I x11 xext xft)
+ 
+ # XFree86 libraries up to 4.3.0 have a bug that can cause a segfault.
+ # The following setting  should  work around that situation.
