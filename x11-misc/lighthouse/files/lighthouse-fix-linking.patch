@@ -1,0 +1,16 @@
+diff -Naur a/Makefile b/Makefile
+--- a/Makefile	2017-04-29 00:19:40.760022872 +0000
++++ b/Makefile	2017-04-29 00:20:35.960025810 +0000
+@@ -39,6 +39,12 @@
+ 	CFLAGS+=-DNO_PANGO
+ endif
+ 
++ifeq "$(shell pkg-config --exists pangocairo && echo 1)" "1"
++	CFLAGS+=`pkg-config --cflags pangocairo`
++	LDFLAGS+=`pkg-config --libs pangocairo`
++endif
++
++
+ options:
+ 	@echo lighthouse build options:
+ 	@echo "CFLAGS   = ${CFLAGS}"

@@ -16,10 +16,12 @@ IUSE=""
 
 DEPEND="x11-libs/libX11
 x11-libs/libxcb
-x11-libs/cairo"
+x11-libs/cairo
+x11-libs/pango"
 RDEPEND="${DEPEND}"
 
 PATCHES[0]="${FILESDIR}/${PN}-fix-keyboard.patch"
+PATCHES[1]="${FILESDIR}/${PN}-fix-linking.patch"
 
 src_compile() {
 	if [ -f Makefile ] || [ -f GNUmakefile ] || [ -f makefile ]; then
@@ -29,16 +31,6 @@ src_compile() {
 
 src_install() {
 	dobin lighthouse
-	dodoc README.md config/lighthouse/{lighthouserc,cmd.py}
-}
-
-pkg_postinst() {
-	echo
-	elog "Example configuration files have been installed at"
-	elog "${ROOT}usr/share/doc/${PF}"
-	elog "${P} uses ~/.config/lighthouse/lighthouserc"
-	elog "as user configuration file."
-	echo
 }
 
 
