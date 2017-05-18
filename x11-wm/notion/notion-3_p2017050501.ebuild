@@ -42,6 +42,8 @@ src_prepare() {
 		-e "/^LDFLAGS/{s: =: +=: ; s:-Wl,--as-needed::}" \
 		-i system-autodetect.mk || die
 	echo > build/lua-detect.mk
+
+	epatch_user
 }
 
 src_configure() {
