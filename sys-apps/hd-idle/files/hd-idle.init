@@ -1,0 +1,18 @@
+#!/sbin/openrc-run
+
+depend() {
+  after udev
+}
+
+start() {
+  ebegin "Starting hd-idle"
+  start-stop-daemon --start -x /usr/sbin/hd-idle -b -m -p /var/run/hd-idle.pid -- -d ${PARAMETERS}
+  eend $?
+}
+
+stop() {
+  ebegin "Stopping hd-idle"
+  start-stop-daemon --stop --exec /usr/sbin/hd-idle \
+    --pidfile /var/run/hd-idle.pid
+  eend $?
+}
