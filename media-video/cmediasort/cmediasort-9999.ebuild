@@ -8,8 +8,8 @@ PYTHON_COMPAT=( python3_5 )
 
 inherit distutils-r1
 
-DESCRIPTION="A library for automaticly sorting mediafiles"
-HOMEPAGE="https://github.com/ChrisOboe/mediasort"
+DESCRIPTION="A tool for automaticly sorting mediafiles"
+HOMEPAGE="https://github.com/ChrisOboe/cmediasort"
 
 LICENSE="GPL-3"
 SLOT="0"
@@ -18,17 +18,23 @@ IUSE=""
 if [[ ${PV} == 9999 ]]; then
 	inherit git-r3
 	EGIT_REPO_URI="https://github.com/ChrisOboe/${PN}.git"
+	SRC_URI=""
 	KEYWORDS=""
 else
 	SRC_URI="https://github.com/ChrisOboe/${PN}/archive/${PV}.tar.gz -> ${P}.tar.gz"
 	KEYWORDS="~amd64 ~x86"
 fi
 
-#S="${WORKDIR}/${PN}"
+#S="${WORKDIR}/${P}"
 
 DEPEND="dev-python/setuptools[${PYTHON_USEDEP}]"
-RDEPEND="
-	dev-python/guessit[${PYTHON_USEDEP}]
-	dev-python/tmdbsimple[${PYTHON_USEDEP}]
-	dev-python/python-dateutil[${PYTHON_USEDEP}]
-	dev-python/mako[${PYTHON_USEDEP}]"
+RDEPEND="dev-python/appdirs[${PYTHON_USEDEP}]
+         dev-python/pyyaml[${PYTHON_USEDEP}]"
+
+if [[ ${PV} == 9999 ]]; then
+	RDEPEND="${RDEPEND}
+			=dev-python/mediasort-9999[${PYTHON_USEDEP}]"
+else
+	RDEPEND="${RDEPEND}
+			dev-python/mediasort[${PYTHON_USEDEP}]"
+fi
