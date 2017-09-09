@@ -17,6 +17,7 @@ IUSE="nls xinerama +xrandr xft"
 RDEPEND=">=dev-lang/lua-5.1:0=
 	x11-libs/libSM
 	x11-libs/libX11
+	x11-apps/xmessage
 	x11-libs/libXext
 	xft? ( x11-libs/libXft )
 	nls? ( sys-devel/gettext )
