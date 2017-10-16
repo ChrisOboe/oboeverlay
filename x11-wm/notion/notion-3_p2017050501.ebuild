@@ -12,17 +12,17 @@ SRC_URI="https://github.com/raboof/${PN}/archive/${PV/_p/-}.tar.gz -> ${P}.tar.g
 LICENSE="LGPL-2.1"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="nls xinerama +xrandr xft"
+IUSE="nls xinerama +xrandr"
 
 RDEPEND=">=dev-lang/lua-5.1:0=
 	x11-libs/libSM
 	x11-libs/libX11
 	x11-apps/xmessage
 	x11-libs/libXext
-	xft? ( x11-libs/libXft )
 	nls? ( sys-devel/gettext )
 	xinerama? ( x11-libs/libXinerama )
 	xrandr? ( x11-libs/libXrandr )"
+#xft? ( x11-libs/libXft )
 DEPEND="${RDEPEND}
 		virtual/pkgconfig"
 
@@ -35,9 +35,9 @@ RESTRICT=test
 S=${WORKDIR}/${P/_p/-}
 
 src_prepare() {
-	if use xft ; then
-		epatch "${FILESDIR}/${PN}-2017-xft.patch"
-	fi
+#	if use xft ; then
+#		epatch "${FILESDIR}/${PN}-2017-xft.patch"
+#	fi
 
 	sed -e "/^CFLAGS/{s: =: +=: ; s:-Os:: ; s:-g::}" \
 		-e "/^LDFLAGS/{s: =: +=: ; s:-Wl,--as-needed::}" \
