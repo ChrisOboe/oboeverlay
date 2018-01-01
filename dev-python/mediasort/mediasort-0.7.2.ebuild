@@ -10,7 +10,6 @@ inherit distutils-r1
 
 DESCRIPTION="A library for automaticly sorting mediafiles"
 HOMEPAGE="https://github.com/ChrisOboe/mediasort"
-
 LICENSE="GPL-3"
 SLOT="0"
 IUSE=""
