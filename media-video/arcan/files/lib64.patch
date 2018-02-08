@@ -1,0 +1,12 @@
+diff -Naur a/src/shmif/CMakeLists.txt b/src/shmif/CMakeLists.txt
+--- a/src/shmif/CMakeLists.txt	2018-02-06 19:02:49.660126622 +0100
++++ b/src/shmif/CMakeLists.txt	2018-02-06 19:54:55.476843527 +0100
+@@ -34,7 +34,7 @@
+ 	set(ASHMIF_STDLIB -lrt)
+ endif()
+ 
+-set(ASHMIF_INSTPATH lib)
++set(ASHMIF_INSTPATH lib64)
+ 
+ # a nasty little detail here is that we actually expand the build-time
+ # platforms into a header that is included in the beginning of the defs.h file.
