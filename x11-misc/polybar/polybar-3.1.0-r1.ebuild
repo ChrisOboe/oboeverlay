@@ -20,7 +20,7 @@ IUSE="alsa i3wm mpd github +network"
 RDEPEND="
 	x11-libs/libxcb
 	dev-lang/python:2.7
-	x11-proto/xcb-proto
+	<x11-base/xcb-proto-1.13
 	x11-libs/xcb-util-wm
 	x11-libs/xcb-util-image
 
@@ -31,7 +31,7 @@ RDEPEND="
 	network? ( net-wireless/wireless-tools )
 "
 DEPEND="${RDEPEND}"
-PATCHES[0]="${FILESDIR}/no-werror.patch"
+PATCHES[0]="${FILESDIR}/3.1.0-no-werror.patch"
 
 CMAKE_BUILD_TYPE=Release
 
