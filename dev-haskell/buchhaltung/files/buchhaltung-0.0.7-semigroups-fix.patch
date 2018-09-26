@@ -1,0 +1,32 @@
+diff -Naur a/buchhaltung.cabal b/buchhaltung.cabal
+--- a/buchhaltung.cabal	2018-09-26 13:11:52.320019764 -0000
++++ b/buchhaltung.cabal	2018-09-26 13:13:59.590020364 -0000
+@@ -166,6 +166,8 @@
+                 , unordered-containers
+                 , vector
+                 , yaml
++if !impl(ghc >= 8.0)
++  build-depends: semigroups == 0.18.*
+ 
+ 
+ Source-repository head
+
+diff -Naur a/src/Buchhaltung/ZipEdit2.hs b/src/Buchhaltung/ZipEdit2.hs
+--- a/src/Buchhaltung/ZipEdit2.hs	2017-09-16 17:31:28.000000000 -0000
++++ b/src/Buchhaltung/ZipEdit2.hs	2018-09-26 13:15:18.383354056 -0000
+@@ -41,6 +41,7 @@
+ import           Control.Arrow
+ import           Control.Monad.RWS.Strict
+ import qualified Data.List.NonEmpty as E
++import qualified Data.Semigroup as S
+ import qualified Data.Text as T
+ import qualified Data.Text.IO as T
+ import           System.Directory (removeFile)
+@@ -198,6 +198,8 @@
+                                     -- ^ an action annotated with a
+                                     --   help string.
+ 
++instance S.Semigroup (Action m a u)
++
+ instance Monoid (Action m a u) where
+   mappend = Comp
