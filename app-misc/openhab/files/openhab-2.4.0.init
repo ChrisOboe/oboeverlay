@@ -1,0 +1,14 @@
+#!/sbin/openrc-run
+# Copyright 1999-2019 Gentoo Authors
+# Distributed under the terms of the GNU General Public License v2
+
+command=/usr/bin/openhab
+command_args=server
+pidfile=/var/run/openhab.pid
+description="OpenHAB home automation platform"
+command_background=true
+command_user=openhab
+
+stop_post() {
+  kill $(sed -n -e 's/^\s*item.0.pid\s*=\s*//p' /opt/openhab/userdata/tmp/instances/instance.properties)
+}
