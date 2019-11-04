@@ -14,9 +14,9 @@ LICENSE="MIT"
 SLOT="0"
 KEYWORDS="~amd64"
 
-DEPENT="sys-devel/clang
+DEPEND="sys-devel/clang
 	dev-libs/rapidjson"
-RDEPENT="${DEPEND}"
+RDEPEND="${DEPEND}"
 
 CLANG_SLOT=${SLOT%%.*}
 
